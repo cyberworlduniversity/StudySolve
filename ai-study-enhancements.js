@@ -3,15 +3,13 @@
  * Admin question banks are not required for the Solve experience.
  */
 (function () {
-  const originalSendSolve = window.sendSolve;
-
-  window.sendSolve = async function universalStudySolve(message) {
-    if (!window.state?.user) {
-      window.showAuth?.(true);
+  sendSolve = async function universalStudySolve(message) {
+    if (!state.user) {
+      showAuth(true);
       return;
     }
 
-    const s = window.state.solve;
+    const s = state.solve;
     const subjectEl = document.getElementById('solveSubject');
     const topicEl = document.getElementById('solveTopic');
     const languageEl = document.getElementById('solveLanguage');
@@ -19,14 +17,14 @@
     s.topic = topicEl?.value.trim() || s.topic || '';
     s.language = languageEl?.value || s.language || 'English';
     s.messages.push({ role: 'user', text: message });
-    window.render?.();
+    render();
 
     try {
       if (!s.sessionId) {
-        const { data: session, error: sessionError } = await window.supabase
+        const { data: session, error: sessionError } = await supabase
           .from('study_sessions')
           .insert({
-            user_id: window.state.user.id,
+            user_id: state.user.id,
             mode: 'solve',
             topic: s.topic || s.subject || s.category,
             teacher_language: s.language,
@@ -38,10 +36,10 @@
         if (sessionError) throw sessionError;
         s.sessionId = session.id;
 
-        const { data: problem, error: problemError } = await window.supabase
+        const { data: problem, error: problemError } = await supabase
           .from('problems')
           .insert({
-            user_id: window.state.user.id,
+            user_id: state.user.id,
             session_id: s.sessionId,
             question: message,
             subject: s.subject || null,
@@ -54,7 +52,7 @@
         if (problemError) throw problemError;
         s.problemId = problem.id;
       } else if (s.problemId) {
-        const { error } = await window.supabase
+        const { error } = await supabase
           .from('problems')
           .update({
             question: message,
@@ -66,8 +64,8 @@
         if (error) throw error;
       }
 
-      await window.supabase.from('ai_teacher_messages').insert({
-        user_id: window.state.user.id,
+      await supabase.from('ai_teacher_messages').insert({
+        user_id: state.user.id,
         session_id: s.sessionId,
         role: 'user',
         content: message,
@@ -78,7 +76,7 @@
         content: item.text,
       }));
 
-      const { data, error } = await window.supabase.functions.invoke('ai-study', {
+      const { data, error } = await supabase.functions.invoke('ai-study', {
         body: {
           message,
           subject: s.subject,
@@ -92,7 +90,6 @@
       });
 
       if (error) throw error;
-
       if (data?.status === 'provider_not_configured') {
         throw new Error(data.message || 'AI provider is not configured yet.');
       }
@@ -101,38 +98,38 @@
       if (!reply) throw new Error('StudySolve AI returned no answer.');
 
       s.messages.push({ role: 'teacher', text: reply });
-      await window.supabase.from('ai_teacher_messages').insert({
-        user_id: window.state.user.id,
+      await supabase.from('ai_teacher_messages').insert({
+        user_id: state.user.id,
         session_id: s.sessionId,
         role: 'assistant',
         content: reply,
       });
 
-      window.render?.();
+      render();
     } catch (error) {
       console.error('StudySolve AI error:', error);
       s.messages.push({
         role: 'teacher',
         text: `I could not complete that request. ${error?.message || 'Please try again.'}`,
       });
-      window.render?.();
+      render();
     }
   };
 
   // Add a prominent universal-AI entry point to the dashboard without replacing
   // the existing dashboard implementation.
-  const originalDashboard = window.dashboard;
+  const originalDashboard = dashboard;
   if (typeof originalDashboard === 'function') {
-    window.dashboard = async function universalAIDashboard() {
+    dashboard = async function universalAIDashboard() {
       const base = await originalDashboard.apply(this, arguments);
-      if (!window.state?.user) return base;
+      if (!state.user) return base;
       return `${base}<div class="card ai-universal-card"><div><span class="eyebrow">AI STUDY ENGINE</span><h3>Ask StudySolve anything</h3><p class="muted">Questions, homework, exam doubts, programming, answer checking and problem solving are handled dynamically by AI.</p></div><button class="primary" data-page="solve">Ask AI Teacher</button></div>`;
     };
   }
 
-  const originalMaterialsPage = window.materialsPage;
+  const originalMaterialsPage = materialsPage;
   if (typeof originalMaterialsPage === 'function') {
-    window.materialsPage = function universalAIMaterialsPage() {
+    materialsPage = function universalAIMaterialsPage() {
       const base = originalMaterialsPage.apply(this, arguments);
       return `${base}<div class="card ai-universal-card"><div><span class="eyebrow">AI AUTOMATION</span><h3>No manual question bank required</h3><p class="muted">StudySolve can generate explanations, questions, quizzes, flashcards and revision content from student-provided material.</p></div></div>`;
     };
