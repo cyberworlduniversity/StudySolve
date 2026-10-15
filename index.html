@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="StudySolve — solve difficult topics, learn from mistakes, practice and track mastery." />
+  <meta name="theme-color" content="#2563eb" />
+  <title>StudySolve</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">SS</div><div><strong>StudySolve</strong><span>Learn. Practice. Master.</span></div></div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-item active" data-page="dashboard">⌂ <span>Dashboard</span></button>
+        <button class="nav-item" data-page="solve">✦ <span>AI Teacher</span></button>
+        <button class="nav-item" data-page="materials">▣ <span>Study Materials</span></button>
+        <button class="nav-item" data-page="practice">✓ <span>Practice</span></button>
+        <button class="nav-item" data-page="progress">◒ <span>Progress</span></button>
+        <button class="nav-item" data-page="planner">◷ <span>Study Planner</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="nav-item" data-page="profile">◉ <span>Profile</span></button>
+        <button class="nav-item" data-page="settings">⚙ <span>Settings</span></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button mobile-only" id="menuButton" aria-label="Open menu">☰</button>
+        <div class="topbar-title"><span id="pageEyebrow">STUDYSOLVE</span><h1 id="pageTitle">Dashboard</h1></div>
+        <div class="topbar-actions">
+          <button class="icon-button" id="themeButton" aria-label="Toggle theme">◐</button>
+          <button class="avatar" id="profileButton" aria-label="Open profile">S</button>
+        </div>
+      </header>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <section id="page" class="page" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <div id="authModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card auth-card">
+      <button class="modal-close" id="authClose" aria-label="Close">×</button>
+      <div class="auth-brand"><div class="brand-mark">SS</div><h2>StudySolve</h2></div>
+      <p id="authSubtitle">Sign in to continue your learning journey.</p>
+      <form id="authForm">
+        <label id="nameField" class="hidden">Full name<input id="authName" type="text" autocomplete="name" /></label>
+        <label>Email<input id="authEmail" type="email" autocomplete="email" required /></label>
+        <label>Password<input id="authPassword" type="password" autocomplete="current-password" minlength="8" required /></label>
+        <button class="primary full" type="submit" id="authSubmit">Sign in</button>
+      </form>
+      <div class="auth-links"><button id="authModeToggle" class="text-button">Create an account</button><button id="forgotButton" class="text-button">Forgot password?</button></div>
+      <p id="authMessage" class="form-message"></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
