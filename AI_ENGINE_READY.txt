@@ -1,0 +1,1 @@
+Universal AI Study Engine deployed to Supabase as ai-study. Configure OPENAI_API_KEY and OPENAI_MODEL as Edge Function secrets to enable generated answers. The website never stores AI provider secrets.
