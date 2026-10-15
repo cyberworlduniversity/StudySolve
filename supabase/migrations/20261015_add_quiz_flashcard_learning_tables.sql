@@ -1,0 +1,30 @@
+create table if not exists public.quiz_attempts (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, material_id uuid references public.study_materials(id) on delete set null, transformation_id uuid references public.study_material_transformations(id) on delete set null, title text not null, score integer not null default 0, total integer not null default 0, completed_at timestamptz not null default now(), created_at timestamptz not null default now());
+create table if not exists public.quiz_answers (id uuid primary key default gen_random_uuid(), attempt_id uuid not null references public.quiz_attempts(id) on delete cascade, question_index integer not null, question text not null, selected_answer text, correct_answer text, is_correct boolean not null default false, explanation text, created_at timestamptz not null default now());
+create table if not exists public.mistakes (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, quiz_attempt_id uuid references public.quiz_attempts(id) on delete set null, question text not null, user_answer text, correct_answer text, explanation text, subject text, topic text, review_count integer not null default 0, resolved boolean not null default false, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table if not exists public.flashcards (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, material_id uuid references public.study_materials(id) on delete set null, transformation_id uuid references public.study_material_transformations(id) on delete set null, front text not null, back text not null, status text not null default 'new', next_review_at timestamptz, review_count integer not null default 0, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table if not exists public.revision_items (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete cascade, flashcard_id uuid references public.flashcards(id) on delete cascade, topic text, due_at timestamptz not null default now(), interval_days integer not null default 1, ease numeric not null default 2.5, review_count integer not null default 0, last_reviewed_at timestamptz, created_at timestamptz not null default now());
+create index if not exists quiz_attempts_user_idx on public.quiz_attempts(user_id, created_at desc);
+create index if not exists quiz_answers_attempt_idx on public.quiz_answers(attempt_id, question_index);
+create index if not exists mistakes_user_idx on public.mistakes(user_id, resolved, created_at desc);
+create index if not exists flashcards_user_review_idx on public.flashcards(user_id, status, next_review_at);
+create index if not exists revision_items_due_idx on public.revision_items(user_id, due_at);
+
+alter table public.quiz_attempts enable row level security;
+alter table public.quiz_answers enable row level security;
+alter table public.mistakes enable row level security;
+alter table public.flashcards enable row level security;
+alter table public.revision_items enable row level security;
+
+create policy quiz_attempts_select_own on public.quiz_attempts for select to authenticated using (user_id = auth.uid());
+create policy quiz_attempts_insert_own on public.quiz_attempts for insert to authenticated with check (user_id = auth.uid());
+create policy quiz_answers_select_own on public.quiz_answers for select to authenticated using (exists (select 1 from public.quiz_attempts a where a.id = attempt_id and a.user_id = auth.uid()));
+create policy quiz_answers_insert_own on public.quiz_answers for insert to authenticated with check (exists (select 1 from public.quiz_attempts a where a.id = attempt_id and a.user_id = auth.uid()));
+create policy mistakes_select_own on public.mistakes for select to authenticated using (user_id = auth.uid());
+create policy mistakes_insert_own on public.mistakes for insert to authenticated with check (user_id = auth.uid());
+create policy mistakes_update_own on public.mistakes for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy flashcards_select_own on public.flashcards for select to authenticated using (user_id = auth.uid());
+create policy flashcards_insert_own on public.flashcards for insert to authenticated with check (user_id = auth.uid());
+create policy flashcards_update_own on public.flashcards for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy revision_items_select_own on public.revision_items for select to authenticated using (user_id = auth.uid());
+create policy revision_items_insert_own on public.revision_items for insert to authenticated with check (user_id = auth.uid());
+create policy revision_items_update_own on public.revision_items for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
